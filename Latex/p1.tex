@@ -1,0 +1,277 @@
+\subsection{Descripción del problema}
+
+Tenemos un puesto de control y un grupo, conocido y finito de camiones a controlar por un experto. Este 
+experto puede ser contratado por una cantidad finita de días consecutivos.
+El problema de los camiones sospechosos consiste en encontrar la máxima cantidad de camiones que el experto
+puede controlar, dado su tiempo de contrato. Y devolver alguno de los días donde, al contratarlo, esto ocurre.
+Para esto cuento con la cantidad de tiempo que se contratará el experto, la cantidad de camiones que llegarán
+de la empresa y los días de llegada de los camiones.
+
+De ahora en más cada instancia la escribiremos de la siguiente manera:\\
+	instancia: (D,C,$c_1$,..,$c_n$)\\
+	Resultado: (DI,CC)\\
+	D: días de contrato del experto.\\
+	n: cantidad de camiones totales.\\
+	$c_i$: día de llegada del camión i.\\
+	DI: día de contratación del experto.\\
+	CC: numero de camiones controlados.
+	
+\subsubsection{Ejemplos}
+
+\begin{center}
+  
+   \begin{tabular}{| l | c | r | c | r |c | r | }
+     \hline
+     Plazo de contrato & Cantidad de Camiones & Días de llegada de los n camiones & Posibles Resultados  \\ \hline
+     3 & 4 & [3,2,7,2] & [(2,3),(1,3)] \\ \hline
+    7 & 7 & [2,4,6,8,10,12,14] & [(2,4),(4,4),(6,4),(8,4)] \\
+     \hline
+   \end{tabular}
+ \end{center}
+ 
+En la primer instancias esos son los posibles resultados, pues si se contrata al experto en el día uno o dos podrá controlar los dos camiones de ese día y el del siguiente 
+para un total de tres, pero no el del séptimo día, pues su contrato habrá expirado. El mismo razonamiento se aplica al la segunda instancia.
+
+En nuestro algoritmo solo vamos a devolver uno de ellos, en ambos casos el primero.
+
+
+\subsection{Resolución}
+Para ayudar a la claridad de las ideas primero que nada vamos a definir un conjunto particular que denominaremos caja válida.
+Un subconjunto de días, de llegadas de camiones, está en una caja válida cuando todos los elementos tienen una diferencia
+máxima de $D-1$ días, siendo $D$ la cantidad de días que puede acudir el experto.
+
+Para resolver este problema en el menor tiempo posible, procederemos a ordenar los días de llegada de los camiones.
+Esto nos permite obtener luego el elemento mínimo y el elemento máximo del conjunto en O(1). Luego podremos saber si 
+ un conjunto de días es una caja valida comparando solo el máximo y el mínimo en vez de todos los elementos.
+
+El algoritmo se basa en recorrer la lista ordenada con dos iteradores, $ultimo$ y $primero$, y para cada elemento al 
+que apunta $primero$ encontrar una caja válida maximal, agregando camiones a la misma hasta que aparezca uno fuera del plazo, 
+lo que nos indica, como la lista esta ordenada,
+ que ningún otro camión puede estar en la caja. Notamos que no empezamos, necesariamente, con la caja vacía, sino que empezamos
+ con la caja valida maximal del anterior sin el elemento anterior. Esto 
+ lo podemos hacer pues, si el elemento actual, día de llegada del i-esimo camión, estaba contenido estaba contenido en la caja 
+ del elemento anterior, entonces, si empiezo el contrato a partir del día i,
+ voy a seguir  abarcando todos los camiones que abarcaba la caja anterior, salvo los que llegaban antes del día i, que en este 
+ caso solo podría ser el (i-1)-esimo camión. Si, por el contrario la caja del 
+ elemento anterior no incluía al actual, entonces la caja solo podía contener al elemento anterior, porque esta ordenado. Luego,
+ la caja del anterior sin el elemento anterior, es una caja vacía, lo que 
+ no nos contradice el invariante, léase por invariante que todos los elementos en la caja serian revisados por el experto si lo
+ contratáramos el día actual, aunque no necesariamente son todos los que podría revisar.
+
+Luego comparamos cada una, mediante cantidad de camiones que abarca, con la mejor caja encontrada 
+hasta ahora y nos quedamos siempre con la mejor. Esto se logra con el algoritmo descripto en el pseudocódigo.
+
+\subsubsection{Pseudocódigo}
+\begin{algoritmo}{resolver}{\In{contrato}{Nat}, \In{cantidadCamiones}{Nat}, \In{diasCamiones}{Lista(Nat)}}[tupla(Nat,Nat)]
+	ordenar diasCamiones de  manera creciente \;
+	Nat mejorCantidad \asignar 0 \;
+	Nat mejorDiaDeInicio \asignar 0 \;
+	itList(Nat) itUltimo \asignar crear iterador en diasCamiones \;
+	Nat i \asignar 0 \;
+	itList(Nat) itPrimero \asignar crear iterador en diasCamiones \;
+	Nat u \asignar 0 \;
+	\While {haySiguiente?(itPrimero) $\vee$ haySiguiente?(itUltimo)}{
+		bool entraUnoMas = (itUltimo*)-(itPrimero*) < contrato \;
+		\uIf {entraUnoMas}{
+			Nat cantidadActual \asignar u+1-i \;
+			\If{mejorCantidad < cantidadActual}{
+				mejorCantidad \asignar cantidadActual \;
+				mejorDiaDeInicio \asignar itPrimero* \;
+			}
+			itUltimo++ \;
+			u++ \;
+		}
+		\Else{
+			itPrimero++ \;
+			i++\;
+		}
+	}
+	return (mejorCantidad,mejorDiaDeInicio) \;
+\end{algoritmo}
+
+\subsection{Correctitud}
+
+Sea $subsoluciones$ un conjunto de pares (d,c) donde d representa un día, en el que arriban camiones, y c la cantidad 
+de camiones que revisaría el experto si lo contratara ese día. 
+Luego definimos $soluciones$ en base a $subsoluciones$ agarrando solo los pares de c máximo. Queremos ver que el algoritmo
+devuelve uno de estos días, pues sabemos, por Lema 1, que hay una solución óptima entre
+estos días, y se además que todas abarcan la misma cantidad de camiones, por lo que son todas óptimas.
+Sea $(d_1,c_1)$ tal que $\forall (d,c) \in soluciones, d_1 \leq d$ .
+
+El algoritmo avanza el iterador $primero$ pasando por todos los días de llegada de un camión, así que en alguna 
+k-esima iteración valdrá $primero*$ == $d$. Definimos el predicado 
+$entraUnoMas == ultimo*-primero* < contrato$.Luego tenemos dos casos a analizar: 
+
+\paragraph{$entraUnoMas$ es verdadero} 
+$\Rightarrow entraUnoMas == ultimo*-primero* < contrato$, por lo que la cantidad 
+de camiones comprendida por la caja válida actual, que representa los camiones indexados entre (primero*) y 
+(ultimo*), llamémosla CA, seria $u + 1 - i$, donde u e i representan la cantidad 
+de camiones que arribaron antes de los que indexan (ultimo*) y (primero*), respectivamente.
+
+Si CA es mayor que $c_1$ estoy en un absurdo, pues tengo una caja válida más grande que una de las soluciones.
+
+Si CA es menor o igual que $c_1$ entonces se comparará con la mejor cantidad hasta ahora, si es menor se repetirá el
+proceso aumentando $ultimo$. Si es igual, entonces ya tengo guardada la mejor 
+cantidad posible, pues $c_1$ proviene de una solución óptima.
+
+\paragraph{$entraUnoMas$ es falso}
+$\Rightarrow entraUnoMas == ultimo*-primero* \geq contrato$, lo que podemos notar de esto es que inmediatamente el 
+algoritmo se encuentre en este caso, va a pasar a aumentar (primero*) hasta volver a conseguir 
+una caja valida. Pero esta condición solo ocurre cuando yo ya pase por una caja maximal K de la que ya procese sus
+datos, y las siguientes no van a ser mejores hasta que pueda volver a encontrar una valida, pues 
+contienen estrictamente menos elementos. Esto se sucede porque si una caja j, siguiente a la ya procesada, es invalida 
+al agregarle (ultimo*) solo era valida cuando contenía a los elementos siguientes a j que 
+también contenía K. Pero como j es siguiente a K, contiene menos elementos, por lo cual no puede ser una solución óptima.
+
+
+\subsubsection{Lema 1: No pierdo todas las soluciones óptimas si solo recorro los días donde arriban camiones.}
+Queremos demostrar que si buscamos una solución óptima solo en los días donde arriben camiones, la encontraremos. Es decir, no es posible 
+que el mejor día de contrato de todos los días abarque mas camiones que el
+día de contrato de solo los días en que llegan camiones.
+Sea D una solución óptima , es decir, un día i que maximice los camiones controlados. Pueden suceder dos cosas con D:
+
+\paragraph{El día i llega al menos un camión:} Si llega un camión el día i, entonces D pertenece a los días en los que buscamos la solución 
+óptima así que, si asumimos que el resto del algoritmo es correcto,
+la encontraremos revisando solo estos.
+
+\paragraph{El día i no llegan camiones:} Si no llega ningún camión el día i, $\Rightarrow$ se que hay un intervalo $k \geq 1$ donde el
+experto no revisaría ningún camión. 
+$\therefore$ si lo contrato el día i o el día i+k el experto revisaría la misma cantidad de camiones, pues se que en el intervalo k no
+revisa ninguno, y como suponemos a D óptimo, no puede revisar mas. 
+$\Rightarrow$ i+k es también una solución óptima.
+
+Ahora tomamos k' como el máximo de todos los intervalos, empezados en i, en los que el experto no revisa ningún camión. Luego, el día
+(i+k'+1) el experto debe revisar algún camión, porque sino en k'+1 días 
+no se revisaría ningún camión y k' no seria el máximo, lo cual es abs. 
+$ \Rightarrow$se que (i+k'+1) pertenece a los días en los cuales buscamos, y es óptimo pues se que el el intervalo k' no 
+había ningún camión, 
+$\Rightarrow$ todos llegaron después del día (i+k'), es decir, a partir del día (i+k'+1). $\Rightarrow$ El día i+k'+1 es 
+solución óptima. $\Rightarrow$ hay una solución en los días en que arriban camiones.
+
+\subsection{Complejidad}
+\subsubsection{Introducción}
+Puede comprobarse en el código que, omitiendo la carga de datos y las iteraciones requeridas
+para manejar las distintas instancias del problema, el algoritmo ejecutado para la resolución del problema es el siguiente.
+
+Debajo del algoritmo se encuentran varias aclaraciones identificadas por el número de línea.
+
+Sea n la cantidad de camiones que llegan.
+
+\subsubsection{Pseudocódigo}
+\begin{algoritmo}{resolver}{\In{contrato}{Nat}, \In{cantidadCamiones}{Nat}, \In{diasCamiones}{Lista(Nat)}}[tupla(Nat,Nat)]
+\LinesNumbered
+\nl	diasCamiones.sort() \tcc*{$O$(nLogn)}
+	Nat mejorCantidad \asignar 0 \tcc*{$O$(1)}
+	Nat mejorDiaDeInicio \asignar 0 \tcc*{$O$(1)}
+
+
+	It ultimo \asignar diasCamiones.begin() \tcc*{$O$(1)}
+	Nat i \asignar 0 \tcc*{$O$(1)}
+	It primero \asignar diasCamiones.begin() \tcc*{$O$(1)}
+	Nat j \asignar 0 \tcc*{$O$(1)}
+	\While (\tcc*[f]{$O$($n$)}){primero $\neq$ cantidadCamiones.end()$\vee$ultimo $\neq$ cantidadCamiones.end()}{
+		bool entraUnoMas = *ultimo-*primero < contrato \tcc*{$O$(1)}
+		\uIf(\tcc*[f]{$O$($1$)}) {(entraUnoMas)}{
+			Nat cantidadActual \asignar i+1-j \tcc*{$O$(1)}
+			\If(\tcc*[f]{$O$($1$)}){mejorCantidad < cantidadActual}{
+				mejorCantidad \asignar cantidadActual \tcc*{$O$(1)}
+				mejorDiaDeInicio \asignar primero* \tcc*{$O$(1)}
+			}
+			ultimo++ \tcc*{$O$(1)}
+			i++	\tcc*{$O$(1)}
+		}
+		\Else{
+			primero++ \tcc*{$O$(1)}
+			j++ \tcc*{$O$(1)}
+		}
+	}
+	return (mejorCantidad, mejorDiaDeInicio) \tcc*{$O$(1)}
+	
+\end{algoritmo}
+
+Aclaraciones: \\
+\\1) Véase en http://en.cppreference.com/w/cpp/container/list/sort, la complejidad es O($nlogn$) comparaciones, pero
+como usamos la comparación estándar, las comparaciones son O(1), la complejidad final es O($nlogn$) .
+\\4,5) Usamos tanto un iterador como un acumulador para ver la posición, esto lo hacemos para poder hacer cantidadActual en la línea 
+11 en O(1).
+\\6,7) ídem 4,5
+\\8) Lo que estamos haciendo dentro del ciclo es mover 2 iteradores por una lista, por lo que en $2n$ iteraciones el iterador
+$primero$ habrá recorrido toda la lista. 
+Esto es porque el ciclo itera sobre la cantidad de camiones con dos iteradores distintos, en cada iteracion avanza alguno de 
+los dos, y la condición del ciclo exige que ninguno haya llegado al final. Luego solo puede tardar $2n$ iteraciones en salir del ciclo.
+Por lo tanto, la complejidad del ciclo es O($n$) 
+
+
+\subsubsection{Conclusión}
+Como este algoritmo es iterativo, o sea no tiene partes recursivas, la complejidad total es la suma de las complejidades, luego si sumamos 
+las complejidades de cada línea obtenemos que este algoritmo es O($nLogn$), siendo $n$ la cantidad de camiones totales.
+
+\subsection{Testing}
+Los casos bordes que consideramos en este ejercicio son los que tienen todos los días de llegada iguales, aquellos en lo que los camiones
+siempre tienen 
+una diferencia entre ellos mayor al contrato y aquellos donde hay un solo camión. Para ello, usamos los siguientes casos.
+
+Sea D: Días de contrato del experto\\
+Cantidad de camiones\\
+Ds: Días que arriban los camiones
+
+Solución devuelta por el algoritmo:\\
+De: Día que se contrata al experto\\
+Cr: Cantidad de camiones que revisa.\\
+
+\begin{center}
+  \begin{tabular}{| l | c | r | c | r |c | r |c | r | }
+    \hline
+     D & C & Ds & De & Cr \\ \hline
+     24 & 1 & [1] & 1 & 1\\ \hline
+     5 & 4 & [3,3,3,3] & 3 & 4\\ \hline
+     8 & 5 & [1,9,21,37,80] & 1 &1 \\
+     \hline
+   \end{tabular}
+ \end{center}
+ 
+ \paragraph{Nota}
+La validez de estos resultados se comprobó a mano, mas no se adjuntan las cuentas pues creemos que no aportan mucho mas que espacio 
+malgastado. (Salvemos un árbol! Ahorremos papel!)
+
+\subsection{Experimentación}
+Para la experimentación, generamos instancias aleatorias de distintos tamaños, variando el tamaño del intervalo en el que pueden 
+llegar camiones, los días de llegada son aleatorios dentro de este intervalo.
+Siendo n el tamaño de la entrada. La cantidad de días de contrato del experto también es aleatoria. Léase por aleatoria, creada 
+por la función Rand() de C++ y manipulada lo mínimamente necesario 
+para que diera un numero razonable. La manipulación se muestra en el Anexo del código, en la parte correspondiente al archivo 
+$ejemplos\_random.cpp$.\\
+\paragraph{Gráfico 1} Para este gráfico usamos intervalos de tamaño 1, 1000 y 1000000, muestra el tiempo, en microsegundos,
+requerido para resolver el
+problema.
+\begin{figure}[H]
+    \includegraphics[width=1\textwidth]{grafico1-1}
+  \label{fig:ejemplo}
+\end{figure}
+
+
+\paragraph{Gráfico 2} Para este gráfico usamos un intervalo de tamaño 1000000.
+
+\begin{figure}[H]
+    \includegraphics[width=1\textwidth]{grafico1-2}
+  \label{fig:ejemplo}
+\end{figure}
+
+\subsubsection{Conclusiones} 
+\paragraph{Gráfico 1} En este gráfico no solo queremos hacer notar que la complejidad asintótica es de la pinta nLogn, sino que variar los
+tamaños máximos de el parámetro de días máximos afecta a la complejidad del algoritmo.\\
+\paragraph{Gráfico 2} 
+Lo que hacemos es $constantizar$ el gráfico, es decir, dividimos las mediciones 
+por la complejidad que calculamos, en este caso nLogn. Podemos notar que el gráfico tiende a una constante. \\
+
+\subsection{Desarrollo de los ejercicios adicionales}
+
+\subsubsection{Modificación al ejercicio}
+Agregar la posibilidad de contratar al experto en dos periodos no necesariamente consecutivos de tiempo trae un problema interesante, pues ahora hay que tener en cuenta todos los posibles valores de K entre 1 y D, D siendo la cantidad de días total a contratar al experto, y K siendo la cantidad de días del primer periodo.\\
+
+Notese que como K divide en dos periodos de contrato, desde ahora D1 y D2, podríamos considerar que como un contrato de D días se divide en D1 = K y D2 = D-K esto seria lo mismo que D1 = D-K y D2 = K. En el cambio del algoritmo que propondremos D1 siempre estará antes que D2, así que como sabemos que en algún momento veremos que D2 esta antes que D1 por la propiedad arriba mencionada entonces no estamos perdiendo casos validos.\\
+
+El cambio al algoritmo sera el siguiente, para cada k, correremos el algoritmo original con k como contrato, esto nos dará el primer periodo óptimo para k días de contrato por como funciona el algoritmo original, guardamos todos los datos y corremos nuevamente el algoritmo con el D-k, pero solamente le pasamos los camiones que llegan después de que se termino el primer contrato y guardamos todos los datos en otras variables. sumo la cantidad de camiones que logre conseguir en ambos casos (si no quedan camiones en el segundo caso entonces sumo 0 y pongo el día de inicio de contrato justo después de que termina el otro). ahora si podemos comparar el máximo conseguido con k hasta ahora con el máximo global y si es mayor guardar los datos. esto nos dara el maximo encontrado de correr el algoritmo con cada k.
+
+\subsubsection{Complejidad y Conclusiones}
+La nueva complejidad sera $O$($D*nlog(n)$) donde D es la longitud del contrato y n es la cantidad de camiones que llegaran. esto es así pues hay que recorrer todos los k posibles entre 1 y D y correr el algoritmo original dos veces, y el algoritmo original era $O$($nlog(n)$), así que ahora el algoritmo ya no depende solo de la cantidad de camiones que llegan, como era el caso original, sino que también depende de el tiempo del contrato.

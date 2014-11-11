@@ -1,0 +1,371 @@
+\subsection{Descripción del problema}
+El problema consiste, en dada una lista de joyas, representadas por:\\
+-un numero i entre 1 y n, con n la cantidad de joyas,que indica que la joya i fue la la iesima joya ingresada,\\
+-un descuento por día de espera, y\\
+-un tiempo de producción de cada joya,\\
+devolver un orden, una lista sin repetidos con los números de 1 a n, para fabricar las joyas, que minimice los descuentos 
+generados por la demora en su fabricación, junto con la perdida total de dinero.
+
+Abstrayéndonos del contexto, este problema consiste en dad una secuencia $\Pi$ de n pares $(d,t)$ de números positivos, devolver una lista X 
+de n enteros entre 1 y n, sin repetidos, que representan cada uno la posición del par (joya) en la secuencia original $\Pi$ en un orden que 
+minimice $ \sum_{i=1}^{n}(d_{i}( \sum_{j=1}^{i}t_{j})) $, junto con el valor de la misma.
+
+Esta proviene del hecho de querer minimizar el descuento total, que se obtiene de la suma de los descuentos individuales, que a su vez se 
+obtienen 
+del descuento asociado a cada $joya_i$ ($d_i$) por el tiempo pasado hasta la entrega del mismo, es decir, su tiempo de fabricación mas el 
+de todas 
+las joyas fabricadas previamente ($ \sum_{j=1}^{i}t_{j}$).
+\\ 
+
+\subsubsection{Ejemplos}
+Sea X la lista de prioridad y D el descuento $\Rightarrow$
+\begin{enumerate}
+\item Par: (5,16) \\
+La respuesta es única y es: X==[1] D==80.
+\item Pares: (10,17)(1,9)\\
+Las posibles respuestas son: 
+
+\begin{center}
+  
+   \begin{tabular}{| l | c | r | }
+     \hline
+     Orden de prioridad & Descuento total \\ \hline
+     [1,2] & 196 \\ \hline
+     [2,1] & 277 \\ 
+     \hline
+   \end{tabular}
+ \end{center}
+Como 196 es menor, D==196 y X==[1,2].
+\item Pares: (10,17) (20,20) (13,2) \\
+Las posibles respuestas son: 
+
+\begin{center}
+  
+   \begin{tabular}{| l | c | r | }
+     \hline
+     Orden de prioridad & Descuento total \\ \hline
+     [1,2,3] & 1417 \\ \hline
+     [1,3,2] & 1197 \\ \hline
+     [2,1,3] & 1277 \\ \hline
+     [2,3,1] & 1076 \\ \hline
+     [3,1,2] & 996 \\ \hline
+     [3,2,1] & 856 \\ 
+     \hline
+   \end{tabular}
+ \end{center}
+ 
+ Como 856 es menor, D==856 y X==[3,2,1]
+
+\end{enumerate}
+
+\subsection{Resolución}
+
+Para la resolución de este problema optamos por realizar varios ejemplos, que no adjuntamos por ser demasiado tediosos, antes de plantear una 
+solución. En medio de esto, notamos un patrón en cual mostraba que si la lista es una solución óptima, entonces esta ordenada de mayor a menor  
+según el cociente descuento-tiempo (d/t). 
+
+Explorando esta posibilidad y la relación entre los cocientes, llegamos al Lema 1, demostrado mas abajo, que dice que si
+$\frac{\Pi_{d_{i}}}{\Pi_{t_{i}}} \leq \frac{\Pi_{d_{i+1}}}{\Pi_{t_{i+1}}}$
+$\Rightarrow$ puedo permutar $\Pi_i$ y $\Pi_{i+1}$ obteniendo así un descuento total menor.
+
+Entonces la resolución de este problema se basa en un algoritmo goloso. En cada momento, elegimos el elemento con mayor cociente 
+descuento-tiempo (d/t) 
+sin procesar.
+Luego, una solución óptima proviene de ordenar la lista de manera decreciente de acuerdo al cociente descuento-tiempo. 
+
+\subsubsection{Pseudocódigo}
+Aclaración: la lista joyas aquí mencionada, se pasa siempre por referencia.
+
+\begin{algoritmo}{resolver}{\In{cantidadDeJoyas}{Nat}, \In{joyas}{Lista(Joya)}}[Lista(Joya)]
+	Nat i \asignar 1\;
+	\While{i $\leq$ cantidadDeJoyas}{
+		calcular d/t\;
+	}
+	ordenar joyas de manera decreciente según d/t\;
+	calcular $\sum_{i=1}^{cantidadDeJoyas}(joyas_{d_{i}}( \sum_{j=1}^{i}joyas_{t_{j}}))$\;
+	devolver joyas\;
+\end{algoritmo}
+
+\subsection{Correctitud}
+\subsubsection{Idea}
+Sea $\Pi$ una permutación óptima de $\Omega$, con $\Omega$ la lista de joyas original, quiero demostrar que existe $\Pi'$ ordenada de manera 
+decreciente según
+cociente descuento-tiempo, que también es óptima. Para esto, basta ver que si tengo dos elementos
+$\Pi_i$ y $\Pi_{i+1}$, tales que $\frac{\Pi_{d_{i}}}{\Pi_{t_{i}}} \leq \frac{\Pi_{d_{i+1}}}{\Pi_{t_{i+1}}} $, puedo permutarlos
+obteniendo así un resultado menor, o igual, para la sumatoria. 
+
+Luego, ordenando la sumatoria con este criterio, mediante algún algoritmo similar a 
+bubble sort, obtengo una permutación $\Pi'$, a partir de $\Pi$, que 
+está ordenada y da un resultado igual, pues no puede ser mejor ya que asumimos $\Pi$ óptima, 
+al de la solución óptima. 
+
+Para finalizar, definiremos un orden determinístico, para asegurarnos así que solo existe una
+permutación de $\Pi$ que está ordenada. Con esto quedaría demostrado que $\Pi'$ es una solución óptima.
+\\
+
+\subsubsection{Lema 1: Intercambio de $\Pi$'s}
+\textbf{ Si $\frac{\Pi_{d_{i}}}{\Pi_{t_{i}}} \leq \frac{\Pi_{d_{i+1}}}{\Pi_{t_{i+1}}}$
+$\Rightarrow$ puedo permutar $\Pi_i$ y $\Pi_{i+1}$ obteniendo así un descuento total menor.}
+
+-Queremos ver que podemos permutar $\Pi_i$ y $\Pi_{i+1}$:\\
+Sé que si  $\Pi_i$ y $\Pi_{i+1}$ tienen la siguiente propiedad\\
+$\frac{\Pi_{d_{i}}}{\Pi_{t_{i}}} \leq \frac{\Pi_{d_{i+1}}}{\Pi_{t_{i+1}}} \Rightarrow $ 
+$ \Pi_{d_{i}}\Pi_{t_{i+1}} \leq\Pi_{d_{i+1}}\Pi_{t_{i}} \Rightarrow$ 
+$0 \leq  \Pi_{d_{i+1}}\Pi_{t_{i}}- \Pi_{d_{i}}\Pi_{t_{i+1}}$\\
+Ahora queremos ver las sumatorias de $\Pi$ y $\Pi'$\\
+$SUM(\Pi)=\sum_{j=1}^{n}(\Pi_{d_{j}}( \sum_{k=1}^{j}\Pi_{t_{k}}))$\\
+$SUM(\Pi')= \sum_{j=1}^{i-1}(\Pi_{d_{j}}( \sum_{k=1}^{j}\Pi_{t_{k}}))
++ \Pi_{d_{i+1}}( \sum_{k=1}^{i-1}\Pi_{t_{k}}+ \Pi_{t_{i+1}})
++ \Pi_{d_{i}}( \sum_{k=1}^{i+1}\Pi_{t_{k}})
++ \sum_{j=i+2}^{n}(\Pi_{d_{j}}( \sum_{k=1}^{j}\Pi_{t_{k}}))
+$\\
+
+Nótese que la sumatoria de $\Pi'$ esta escrita en base a la permutación $\Pi$. Esto es para poder realizar cuentas 
+entre ambas sumatorias, porque de otro modo deberíamos probar que los términos sean iguales por separado, lo que nos
+restaría claridad.\\
+
+Luego $SUM(\Pi)-SUM(\Pi') = \\
+\sum_{j=1}^{n}(\Pi_{d_{j}}(\sum_{k=1}^{j}(\Pi_{t_{k}}))) -
+\sum_{j=1}^{i-1}(\Pi_{d_{j}}(\sum_{k=1}^{j}(\Pi_{t_{k}}))) -
+\Pi_{d_{i+1}}(\sum_{k=1}^{i-1}(\Pi_{t_{k}})+\Pi_{t_{i+1}}) -
+\Pi_{d_{i}}(\sum_{k=1}^{i+1}(\Pi_{t_{k}}))-
+\sum_{j=i+2}^{n}(\Pi_{d_{j}}(\sum_{k=1}^{j}(\Pi_{t_{k}}))) = \\ \\
+\xcancel{\sum_{j=i-1}^{n}(\Pi_{d_{j}}(\sum_{k=1}^{j}(\Pi_{t_{k}})))} +
+\Pi_{d_{i}}(\sum_{k=1}^{i}(\Pi_{t_{k}})) +
+\Pi_{d_{i+1}}(\sum_{k=1}^{i+1}(\Pi_{t_{k}}))+
+\xcancel{\sum_{j=i+2}^{n}(\Pi_{d_{j}}(\sum_{k=1}^{j}(\Pi_{t_{k}})))}-
+\xcancel{\sum_{j=1}^{i-1}(\Pi_{d_{j}}(\sum_{k=1}^{j}(\Pi_{t_{k}})))} -
+\Pi_{d_{i+1}}(\sum_{k=1}^{i-1}(\Pi_{t_{k}})+\Pi_{t_{i+1}}) -
+\Pi_{d_{i}}(\sum_{k=1}^{i+1}(\Pi_{t_{k}}))-
+\xcancel{\sum_{j=i+2}^{n}(\Pi_{d_{j}}(\sum_{k=1}^{j}(\Pi_{t_{k}})))} = \\ \\ 
+\Pi_{d_{i}}(\sum_{k=1}^{i}(\Pi_{t_{k}})) +
+\Pi_{d_{i+1}}(\sum_{k=1}^{i+1}(\Pi_{t_{k}}))-
+\Pi_{d_{i+1}}(\sum_{k=1}^{i-1}(\Pi_{t_{k}})+\Pi_{t_{i+1}}) -
+\Pi_{d_{i}}(\sum_{k=1}^{i+1}(\Pi_{t_{k}})) = \\ \\
+\xcancel{\Pi_{d_{i}}(\sum_{k=1}^{i}(\Pi_{t_{k}}))} +
+\xcancel{\Pi_{d_{i+1}}(\sum_{k=1}^{i-1}(\Pi_{t_{k}}))}+
+\Pi_{d_{i+1}}\Pi_{t_{i}}+
+\xcancel{\Pi_{d_{i+1}}\Pi_{t_{i+1}}}-
+\xcancel{\Pi_{d_{i+1}}(\sum_{k=1}^{i-1}(\Pi_{t_{k}}))} -
+\xcancel{\Pi_{d_{i+1}}\Pi_{t_{i+1}}}-
+\xcancel{\Pi_{d_{i}}(\sum_{k=1}^{i}(\Pi_{t_{k}}))}-
+\Pi_{d_{i}}\Pi_{t_{i+1}}=\\ \\
+\Pi_{d_{i+1}}\Pi_{t_{i}}-
+\Pi_{d_{i}}\Pi_{t_{i+1}}\geq 0.
+$
+(por propiedad de $\Pi_i $ y $ \Pi_{i+1}$) \\
+
+Luego $SUM(\Pi)-SUM(\Pi')\geq0$
+por lo tanto $SUM(\Pi) \geq SUM(\Pi')$, lo que nos asegura que si permutamos los elementos, obtenemos una solución mejor o igual.
+
+\subsubsection{Lema 2: Definición de un orden determinístico}
+\textbf{Hay una única secuencia ordenada.}
+
+Sea $\Pi_i$, $\Pi_{i+1}$ tales que 
+$\frac{\Pi_{d_{i}}}{\Pi_{t_{i}}} < \frac{\Pi_{d_{i+1}}}{\Pi_{t_{i+1}}} $
+, defino que el orden como $\Pi_{i+1}$ predecesor de $\Pi_{i}$. Si estoy en el caso 
+$\frac{\Pi_{d_{i}}}{\Pi_{t_{i}}} = \frac{\Pi_{d_{i+1}}}{\Pi_{t_{i+1}}} $
+defino como predecesor a aquel que tenga mayor d. Si estoy en el caso 
+$\frac{\Pi_{d_{i}}}{\Pi_{t_{i}}} > \frac{\Pi_{d_{i+1}}}{\Pi_{t_{i+1}}} $ defino a $\Pi_{i}$ predecesor de $\Pi_{i+1}$. 
+Nótese, que si $\Pi_{i+1}$ es igual a $\Pi_{i}$, entonces el ninguno es el predecesor, pues son el mismo elemento. Luego 
+permutarlos o no hacerlo nos devuelve la misma lista.
+
+\subsubsection{Conclusión}
+Ahora sabemos que dada cualquier secuencia $\Pi$ podemos ordenarla y vamos a conseguir un descuento menor o igual al de la original, por lema 1,
+y también sabemos que solo hay una secuencia $\Pi'$ ordenada, por lema 2, es decir que $\forall \Pi, SUM(\Pi)\leq SUM(\Pi')$, luego $\Pi'$ 
+es óptima.
+
+
+\subsection{Complejidad}
+\subsubsection{Introducción}
+Puede comprobarse en el código que, omitiendo la carga de datos y las iteraciones requeridas
+para manejar las distintas instancias del problema, el algoritmo ejecutado para la resolución del problema es el siguiente.
+
+Debajo del algoritmo se encuentran varias aclaraciones identificadas por el número de línea.
+
+Sea n la cantidad de elementos de la lista, Joya un tipo tupla con tres elementos (Nat n, double d, double t).
+\subsubsection{Pseudocódigo}
+\begin{algoritmo}{resolver}{\In{joyas}{Lista(Joya)}}
+\LinesNumbered
+\nl	joyas.sort(criterioDeComparacion)\tcc*{$O$(nLogn)}
+	Nat montoPerdido \asignar 0\tcc*{$O$(1)}
+	Nat diasTranscurridos \asignar 0\tcc*{$O$(1)}
+	\For(\tcc*[f]{$O$($n$)}){(it \asignar joyas.begin(); it != joyas.end(); it++)}{
+		double d, t\tcc*{$O$(1)}
+		Joya npieza \asignar *it\tcc*{$O$(1)}
+		d \asignar npieza.d\tcc*{$O$(1)}
+		diasTranscurridos \asignar diasTranscurridos + t\tcc*{$O$(1)}
+		montoPerdido \asignar montoPerdido + diasTranscurridos*d\tcc*{$O$(1)}
+	}
+	\return joyas \tcc*{$O$(1)}
+	\return montoPerdido \tcc*{$O$(1)}
+\end{algoritmo}
+
+\begin{algoritmo}{criterioDeComparacion}{\In{joya1}{Joya}, \In{joya2}{Joya}}[bool]
+\LinesNumbered
+\setcounter{AlgoLine}{12}
+\nl	double d1, t1, d2, t2\tcc*{$O$(1)}
+	d1 \asignar joya1.d\tcc*{$O$(1)}
+	t1 \asignar joya1.t\tcc*{$O$(1)}
+	d2 \asignar joya2.d\tcc*{$O$(1)}
+	t2 \asignar joya2.t\tcc*{$O$(1)}
+	\uIf(\tcc*[f]{$O$(1)}){ (d1/t1 $\neq$ d2/t2)}{
+		\return ( d1/t1 $>$ d2/t2 )\tcc*{$O$(1)}
+	}
+	\Else{
+		\return ( d1 $>$ d2 )\tcc*{$O$(1)}
+	}
+\end{algoritmo} 
+
+\subsubsection{Aclaraciones del Pseudocódigo} 
+1) Véase en http://en.cppreference.com/w/cpp/container/list/sort, la complejidad es $nlogn$ comparaciones, pero
+como, por línea 13) y siguientes, las comparaciones son $O$(1), la complejidad final es $O$($nlogn$).\\
+6) Crear un iterador, avanzarlo, y compararlo es O(1), y todas las llamadas internas del for son O(1), luego, la complejidad
+del mismo son la cantidad de iteraciones necesarias para finalizarlo, en este caso, n. Luego, la complejidad del for es O(n).\\
+11) Si bien retornar una lista de n elementos no es O(1), en este contexto, y como lo pasamos por referencia, no nos interesa 
+considerar la complejidad que tomaría mostrarla en pantalla. \\
+11 y 12) Esto es un abuso de lenguaje, así que aclaramos que la función no devuelve dos cosas distintas sino que devuelve 
+ambas cosas en una sola instancia. O, si lo leemos desde el código fuente, modifica joyas y devuelve solo el monto perdido, pero 
+escribirlo de esa manera en el pseudo cogido restaría claridad y no aportaría nada muy importante, ya que es un detalle 
+mínimo de implementación que no modifica la complejidad.
+
+\subsubsection{Conclusión}
+
+Como este algoritmo es iterativo, o sea no tiene partes recursivas, la complejidad total es la suma de las complejidades, luego si sumamos 
+las complejidades de cada linea obtenemos que este algoritmo es O(nLogn), siendo n la cantidad de joyas a ordenar.
+
+\subsection{Testing}
+Los casos bordes que consideramos en este ejercicio son los que tienen los mismos elementos pero permutados, aquellos que 
+tienen la misma proporción entre d y t, y los que tienen un solo elemento. Para ello, usamos las siguientes entradas.
+\begin{center}
+  \begin{tabular}{| l | c | r | c | r |c | r | }
+    \hline
+     Cantidad de Joyas & Joyas & Orden de prioridad & Descuento \\ \hline
+     1 & [(1,1)] & [1] & 1 \\ \hline
+     1 & [(1,5)] & [1] & 5 \\ \hline
+     1 & [(3,2)] & [1] & 6 \\ \hline
+     5 & [(1,2),(2,4),(3,6),(8,16),(10,20)] & [5,4,3,2,1] & 754 \\ \hline
+     5 & [(10,20),(8,16),(3,6),(2,4),(1,2)] & [1,2,3,4,5] & 754 \\ \hline
+     3 & [(1,4),(1,4),(4,16)] & [3,1,2] & 108 \\ \hline
+     3 & [(1,4),(4,16),(1,4)] & [2,1,3] & 108 \\ 
+     \hline
+   \end{tabular}
+ \end{center}
+\paragraph{Nota}
+La validez de estos resultados se comprobó a mano, mas no se adjuntan las cuentas pues creemos que no aportan mucho mas que espacio
+malgastado. (Salvemos un árbol! Ahorremos papel!)
+
+\subsection{Experimentación}
+Para la experimentación, generamos instancias aleatorias de distintos tamaños, variando el tope máximo d y t. Siendo n el tamaño 
+la entrada. Léase por aleatoria, creada por la función Rand() de C++ y manipulada lo mínimamente necesario para que diera un numero razonable.
+La manipulación se muestra en el Anexo del código, en la parte correspondiente al archivo $ejemplos\_random.cpp$.
+
+\paragraph{Gráfico 3}
+Para este gráfico usamos los topes 100 y 1000, además se contempla el caso en el que el coeficiente de todas las joyas de siempre igual,
+muestra el tiempo, en nanosegundos, requerido para resolver el problema.
+
+\paragraph{Gráfico 4}
+Para este gráfico usamos el tope 1000. Lo que hacemos es $constantizar$ el gráfico, es decir, dividimos las mediciones 
+por la complejidad que calculamos, en este caso nLogn. \\
+
+\includepdf[pages={1}]{grafp2.pdf}
+\subsubsection{Conclusiones} 
+\paragraph{Gráfico 3}
+En este gráfico el caso base extremo, denotado con la linea azul, muestra que si todas las joyas tienen el mismo coeficiente, dar el orden es 
+mucho mas fácil.
+Luego podemos ver que no hay casi variación en el costo de ordenarlas si son distintas, aun cuando varia el valor máximo de los costos. Esto
+nos muestra que en realidad el tiempo de resolución no depende tanto de los valores d y t de cada joya, sino que depende en mayor medida de la
+variación entre coeficientes.
+
+\paragraph{Gráfico 4}
+Queremos hacer notar que el gráfico tiende a una constante, es decir, que efectivamente la complejidad es la esperada. \\
+
+\subsection{Desarrollo de los ejercicios adicionales}
+
+\subsubsection{Modificación al ejercicio}
+
+Para la resolver este nuevo problema mantenemos básicamente el mismo algoritmo, porque todas las ideas mencionadas previamente siguen
+valiendo. La única modificación grande, entiéndase por "pequeñas" aquellas
+como cambiar el tipo joya a una tupla de tres elementos y similares, se hace en el criterio de orden, que cambiaremos por el descripto 
+a continuación.
+
+\begin{algoritmo}{criterioDeComparacion}{\In{joya1}{Joya}, \In{joya2}{Joya}}[bool]
+\LinesNumbered
+\setcounter{AlgoLine}{12}
+\nl	double d1, t1, r1, d2, t2, r2\tcc*{$O$(1)}
+	d1 \asignar joya1.d\tcc*{$O$(1)}
+	t1 \asignar joya1.t\tcc*{$O$(1)}
+	r1 \asignar joya1.r\tcc*{$O$(1)}
+	d2 \asignar joya2.d\tcc*{$O$(1)}
+	t2 \asignar joya2.t\tcc*{$O$(1)}
+	r2 \asignar joya2.r\tcc*{$O$(1)}
+	\uIf(\tcc*[f]{$O$(1)}){ (d1/(t1+r1) $\neq$ d2/(t2+r1))}{
+		\return ( d1/t1 $>$ d2/t2 )\tcc*{$O$(1)}
+	}
+	\Else{
+		\uIf(\tcc*[f]{$O$(1)}){ d1 $\neq$ d2}{
+		    \return ( d1 $>$ d2 )\tcc*{$O$(1)}
+		}
+		\Else{
+		    \return ( r1 $>$ r2 )\tcc*{$O$(1)}
+	      }
+	}
+\end{algoritmo} 
+
+En todo lo demás, el algoritmo es el mismo que en el ejercicio original.
+
+\subsubsection{Demostración}
+
+Como primera medida, nótese que el algoritmo es casi igual al original, por lo que tanto la idea de la demostración como
+su conclusión, son idénticas. Lo único que necesitamos modificar son los lemas, de tal
+manera que contemplen el nuevo parámetro.
+
+\subsubsection{Lema 1'}
+\textbf{ Si $\frac{\Pi_{d_{i}}}{(\Pi_{t_{i}}+\Pi_{r_{i}})} \leq \frac{\Pi_{d_{i+1}}}{(\Pi_{t_{i+1}}+\Pi_{r_{i+1}})}$
+$\Rightarrow$ puedo permutar $\Pi_i$ y $\Pi_{i+1}$ obteniendo así un descuento total menor.}
+
+-Queremos ver que podemos permutar $\Pi_i$ y $\Pi_{i+1}$:\\
+Sé que si  $\Pi_i$ y $\Pi_{i+1}$ tienen la siguiente propiedad\\
+$\frac{\Pi_{d_{i}}}{(\Pi_{t_{i}}+\Pi_{r_{i}})} \leq \frac{\Pi_{d_{i+1}}}{(\Pi_{t_{i+1}}+\Pi_{r_{i+1}})} \Rightarrow $ 
+$ \Pi_{d_{i}}(\Pi_{t_{i+1}}+\Pi_{r_{i+1}}) \leq\Pi_{d_{i+1}}(\Pi_{t_{i}}+\Pi_{r_{i}}) \Rightarrow$ 
+$0 \leq  \Pi_{d_{i+1}}(\Pi_{t_{i}}+\Pi_{r_{i}})- \Pi_{d_{i}}(\Pi_{t_{i+1}}+\Pi_{r_{i+1}})$\\
+
+Ahora queremos ver las sumatorias de $\Pi$ y $\Pi'$\\
+$SUM(\Pi)=\sum_{j=1}^{n}(\Pi_{d_{j}}( \sum_{k=1}^{j}\Pi_{t_{k}} + \sum_{h=1}^{j-1}\Pi_{r_{h}}))$\\
+$SUM(\Pi')= \sum_{j=1}^{i-1}(\Pi_{d_{j}}( \sum_{k=1}^{j}\Pi_{t_{k}} + \sum_{h=1}^{j-1}\Pi_{r_{h}}))
++ \Pi_{d_{i+1}}( \sum_{k=1}^{i-1}\Pi_{t_{k}}+ \Pi_{t_{i+1}} + \sum_{h=1}^{i-1}\Pi_{r_{h}})
++ \Pi_{d_{i}}( \sum_{k=1}^{i-1}\Pi_{t_{k}} + \Pi_{t_{i+1}} + \Pi_{t_{i}} + \sum_{h=1}^{i-1}\Pi_{r_{h}} + \Pi_{r_{i+1}})
++ \sum_{j=i+2}^{n}(\Pi_{d_{j}}( \sum_{k=1}^{j}\Pi_{t_{k}} + \sum_{h=1}^{j-1}\Pi_{r_{h}}))
+$\\
+
+Nótese que la sumatoria de $\Pi'$ esta escrita en base a la permutación $\Pi$. Esto es para poder realizar cuentas 
+entre ambas sumatorias, porque de otro modo deberíamos probar que los términos sean iguales por separado, lo que nos
+restaría claridad.\\
+
+Luego $SUM(\Pi)-SUM(\Pi') = \\\sum_{j=1}^{n}(\Pi_{d_{j}}( \sum_{k=1}^{j}\Pi_{t_{k}} + \sum_{h=1}^{j-1}\Pi_{r_{h}})) -
+\sum_{j=1}^{i-1}(\Pi_{d_{j}}( \sum_{k=1}^{j}\Pi_{t_{k}} + \sum_{h=1}^{j-1}\Pi_{r_{h}})) -
+ \Pi_{d_{i+1}}( \sum_{k=1}^{i-1}\Pi_{t_{k}}+ \Pi_{t_{i+1}} + \sum_{h=1}^{i-1}\Pi_{r_{h}})-
+ \Pi_{d_{i}}( \sum_{k=1}^{i-1}\Pi_{t_{k}} + \Pi_{t_{i+1}} + \Pi_{t_{i}} + \sum_{h=1}^{i-1}\Pi_{r_{h}} + \Pi_{r_{i+1}})-
+ \sum_{j=i+2}^{n}(\Pi_{d_{j}}( \sum_{k=1}^{j}\Pi_{t_{k}} + \sum_{h=1}^{j-1}\Pi_{r_{h}})) = 
+\\ \\
+\xcancel{\sum_{j=1}^{i-1}(\Pi_{d_{j}}( \sum_{k=1}^{j}\Pi_{t_{k}} + \sum_{h=1}^{j-1}\Pi_{r_{h}}))} +
+ \Pi_{d_{i}}( \xcancel{\sum_{k=1}^{i-1}\Pi_{t_{k}}}+ \xcancel{\Pi_{t_{i}}} + \xcancel{\sum_{h=1}^{i-1}\Pi_{r_{h}})}+
+ \Pi_{d_{i+1}}( \xcancel{\sum_{k=1}^{i-1}\Pi_{t_{k}}} + \xcancel{\Pi_{t_{i+1}}} + \Pi_{t_{i}} +\xcancel{ \sum_{h=1}^{i-1}\Pi_{r_{h}}} + \Pi_{r_{i}})+
+ \xcancel{\sum_{j=i+2}^{n}(\Pi_{d_{j}}( \sum_{k=1}^{j}\Pi_{t_{k}} + \sum_{h=1}^{j-1}\Pi_{r_{h}}))}-
+\xcancel{\sum_{j=1}^{i-1}(\Pi_{d_{j}}( \sum_{k=1}^{j}\Pi_{t_{k}} + \sum_{h=1}^{j-1}\Pi_{r_{h}}))} -
+ \Pi_{d_{i+1}}( \xcancel{\sum_{k=1}^{i-1}\Pi_{t_{k}}}+ \xcancel{\Pi_{t_{i+1}}} + \xcancel{\sum_{h=1}^{i-1}\Pi_{r_{h}}})-
+ \Pi_{d_{i}}(\xcancel{ \sum_{k=1}^{i-1}\Pi_{t_{k}}} + \Pi_{t_{i+1}} + \xcancel{\Pi_{t_{i}}} + \xcancel{\sum_{h=1}^{i-1}\Pi_{r_{h}}} + \Pi_{r_{i+1}})-
+ \xcancel{\sum_{j=i+2}^{n}(\Pi_{d_{j}}( \sum_{k=1}^{j}\Pi_{t_{k}} + \sum_{h=1}^{j-1}\Pi_{r_{h}}))} =
+ \\ \\
+ \Pi_{d_{i+1}}(\Pi_{t_{i}}+\Pi_{r_{i}})- \Pi_{d_{i}}(\Pi_{t_{i+1}}+\Pi_{r_{i+1}})\geq 0 $
+(por propiedad de $\Pi_i $ y $ \Pi_{i+1}$) \\
+
+Luego $SUM(\Pi)-SUM(\Pi')\geq0$
+por lo tanto $SUM(\Pi) \geq SUM(\Pi')$, lo que nos asegura que si permutamos los elementos, obtenemos una solución mejor o igual.
+
+\paragraph{Lema 2'} Este lema que define que solo hay un orden, es extensible de manera trivial al parámetro. La forma es agregar en el 
+caso de la igualdad, si estoy en el caso en el ambos tienen el parámetro d
+igual, definiré como predecesor a aquel que tenga mayor r. El resto de la demostración es igual.\\
+
+En conclusión, con estos nuevos lemas, la demostración es la misma que en el punto 3.3
+

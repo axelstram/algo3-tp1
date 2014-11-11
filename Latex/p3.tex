@@ -1,0 +1,517 @@
+\subsection{Descripción del problema}
+
+El problema de los Rompecolores consiste en un tablero de $n$ filas y $m$ columnas, y una cantidad de piezas igual a $n*m$. Cada pieza tiene 4 lados, los cuales pueden tener un color entre $1$ y $c$. 
+El objetivo es colocar las piezas en el tablero, de manera tal que, para cada pieza colocada, el color de cada uno de sus lados coincide con el color del lado adyacente de las piezas colocadas alrededor si las hubiera. Se debe buscar la solución que más piezas tenga en el tablero.
+%La entrada del problema consiste de una línea indicando las dimensiones del tablero (n y m) y la cantidad distinta de colores posibles (c). 
+%A esta línea le siguen $n*m$ líneas, cada una de las cuales consta de 4 enteros entre 1 y c, los cuales representan los colores de los lados superior, izquierdo, derecho e inferior, respectivamente.
+%La salida del problema consiste de n líneas, y en cada línea m números, cada uno de estos números representando el estado del tablero en la posición ($n_i$,$m_j$).
+%Si ($n_i$,$m_j$) es 0, no se colocó ninguna pieza en esa posición; en caso contrario, indica el número de la pieza.
+
+\subsubsection{Ejemplos}
+
+\begin{figure}[H]
+    \includegraphics[width=0.6\textwidth]{ejemplo1Compacto}
+  \label{fig:ejemplo}
+  \caption{Esta es una solución óptima porque no hay otro orden donde podamos añadir más de 7 piezas. Fue calculada con el algoritmo sin podas.}
+\end{figure}
+
+
+Esta solución fue obtenida con el algoritmo de backtracking 2 sin podas.
+
+\begin{figure}[H]
+    \includegraphics[width=0.6\textwidth]{ejemplo2Compacto}
+  \label{fig:ejemplo}
+  \caption{Esta es una solución óptima porque coloca todas las piezas en el tablero.}
+\end{figure}
+
+
+
+\subsection{Resolución}
+
+Para resolver este problema, lo encaramos de dos maneras distintas, las cuales se pueden ver en \textit{backtracking1.cpp} y \textit{backtracking2.cpp}. El motivo de esto es que, luego de finalizado \textit{backtracking1.cpp}, 
+nos dimos cuenta de que era complicado implementar algunas de las podas, especialmente la tercera, por lo cual desarrollamos otra solución, que recorre el espacio de soluciones de otra manera tal que la implementación de dichas podas se facilita. 
+Finalmente, cabe señalar que el primer algoritmo recorre algunos subconjuntos del espacio de soluciones varias veces. Esto implica que con las podas adecuadas el segundo algoritmo puede superarlo. 
+En la parte de experimentación, comparamos sus tiempos de ejecución para algunas entradas, ambos teniendo todas las podas activadas.
+\newline 
+\hspace*{0.5 cm}Las diferencias esenciales entre ambas versiones son que la primera toma una pieza, intenta colocarla en cada posición del tablero, y por cada pieza que consigue colocar, recursivamente intenta colocar una segunda pieza en alguna otra posición del tablero, etc;
+ mientras que la segunda versión chequea primero todas las posibles soluciones que surgen de colocar cada una de las $n*m$ piezas en el primer casillero del tablero, luego prueba con el segundo casillero, etc. 
+Pero básicamente ambas versiones siguen la idea de backtracking, es decir, de explorar sistemáticamente el espacio de soluciones factibles, siempre que la rama de la recursión tenga chances de llegar a una solución óptima, 
+cortando ramas de la recursión mediante podas cuando no sea el caso. En el resto del informe, siempre nos referiremos a \textit{backtracking2.cpp}, salvo que explicitemos lo contrario.
+\newline
+\hspace*{0.5 cm}Las podas que implementamos fueron 4. La primera poda restringe la cantidad de casilleros vacíos que deja la función. 
+La segunda poda se fija cuántas piezas tengo en mi mejor solución hasta ahora, cuántas piezas tengo en mi solución actual, y cuántas piezas me quedan por colocar. 
+Si la cantidad de piezas en mi mejor solución hasta ahora es mayor o igual que las piezas en mi solución actual más la cantidad de piezas restantes, entonces, por más que coloque todas las piezas restantes, 
+mi solución actual no va a ser mejor que la mejor solución que encontré hasta ahora; por lo tanto, corto la recursión. 
+En definitiva, es una poda por altura.
+\newline
+\hspace*{0.5 cm}La tercera poda consiste en lo siguiente: supongamos que en un nivel k de la recursión, colocamos una pieza 'p' en un casillero dado, y exploramos los niveles k+1, k+2, etc., del árbol recursivo que se genera a partir de esta decisión. 
+Cuando terminamos de recorrer el árbol recursivo y volvemos al nivel k de la recursión, quitamos la pieza 'p', colocamos en esa posición otra pieza 'q', y repetimos el mismo proceso. 
+Esta poda se beneficia del hecho de que, si la pieza 'q' es exactamente igual a 'p', es decir, los colores de los 4 bordes coinciden, 
+entonces el árbol de decisiones que se generaría sería idéntico al de 'p', y por lo tanto estaríamos repitiendo trabajo. 
+En este caso, la poda se saltea la pieza 'q' y todas las piezas inmediatamente posteriores que sean iguales a 'p'. 
+Para maximizar la efectividad de esta poda, iniciamos el algoritmo con la lista de piezas ordenadas por color, aunque con el paso de las recursiones esta lista puede ir quedando parcial o totalmente desordenada, debido a que va colocando piezas en el tablero, 
+y luego en algún momento cuando se remueven del tablero, no necesariamente van a quedar en el mismo orden en el que estaban originalmente en la lista de piezas, reduciendo la efectivad de la poda. Una solución a esto sería ordenar constantemente la lista de piezas, pero consideramos que esto 
+es muy caro e impactaría negativamente en el tiempo de ejecución final. 
+
+Otra solución posible es armar una estructura de datos que guarde piezas distinguiendo solo por los colores de los lados. Si uno le pide una pieza con el color 1 en todos los lados a esta estructura cuando tiene 2 de ellas, devuelve cualquiera de las dos. Un iterador sobre esta estructura recorrería no todas las piezas sino todas las piezas distintas. Lamentablemente, no dispusimos del tiempo para implementar de manera eficiente y correcta una estructura como esta.
+
+Por último, la cuarta poda chequea si está en el caso de poder generar una solución trivial. Esto pasaría si, en un tablero de $n*m$, con una cota de $n*m*4$ posibles colores distintos, los $n*m*4$ colores se encuentran presentes,
+lo cual implica necesariamente que todas las piezas tienen colores distintos, y nunca las podría colocar juntas. 
+Por lo tanto, la única solución posible es la trivial, es decir, colocar cada pieza separada de las otras por un casillero en blanco. En la sección de correctitud demostramos que generamos la solución de manera tal que es óptima.
+Esta poda es más bien una apuesta al todo o nada. 
+Si bien ahorra mucho tiempo cuando sirve, no muchas instancias vienen con piezas de colores únicos. La dejamos porque podemos restringir el costo temporal de verificar la diversidad de colores para solamente entradas con $c=n*m*4$.
+
+\subsection{Correctitud}
+
+\subsubsection{Backtrack sin podas}
+Primero vamos a demostrar la correctitud del algoritmo cuando no tiene podas.
+
+\LinesNumbered
+\begin{algoritmo}{BacktrackSinPodas}{\Inout{tablero}{Tablero}, \Inout{piezas}{Lista(Pieza)}, \Inout{mejorSolucion}{Lista(PiezaYCoordenada)}, \Inout{solucionPorExplorar}{Lista(PiezaYCoordenada)}, \In{casillero}{Nat}}
+	Coordenada posicion \asignar DeterminarCoordenada(casillero, Ancho(tablero))\;
+	Nat cantPiezas \asignar Tamaño(piezas)\;
+	Nat cantCasillerosRestantes \asignar (Ancho(tablero) * Alto(tablero)) - casillero\;
+	\For{\Forcond{i \asignar 1}{cantPiezas}}{
+		pieza \asignar PrimeraPieza(piezas)\;
+		RemoverPrimerElemento(piezas)\;
+		\If{SePuedeInsertarEn(tablero, pieza, posicion)}{
+			Insertar(tablero, pieza, posicion)\;
+			InsertarAtras(solucionPorExplorar, <pieza, posicion>)\;
+			\If{Tamaño(mejorSolucion) < Tamaño(solucionPorExplorar)}{
+				mejorSolucion \asignar solucionPorExplorar\;
+			}
+			\If{casillero < Ancho(tablero) * Alto(tablero) - 1}{
+				Backtrack(tablero, piezas, mejorSolucion, solucionPorExplorar, casillero+1)\;
+			}
+			RemoverPieza(tablero, posicion)\;
+			RemoverUltimoElemento(solucionPorExplorar)\;
+		}
+		InsertarAtras(piezas, pieza)\;
+	}
+	\If{casillero < Ancho(tablero) * Alto(tablero) - 1}{
+		Backtrack(tablero, piezas, mejorSolucion, solucionPorExplorar, casillero+1)\;
+	}
+\end{algoritmo}
+
+\begin{algoritmo}{DeterminarCoordenada}{\In{casillero}{Nat}, \In{columnas}{Nat}}[Coordenada]
+	\return < (casillero / columnas), (casillero $mod$ columnas) >
+\end{algoritmo}
+
+\textbf{Tipo Pieza}: Una pieza está caracterizada por un número identificatorio y cuatro números naturales que representan los colores.
+
+\textbf{Tipo Tablero}: Un tablero está definido por su ancho, alto, la cantidad de piezas que tiene, y una matriz de piezas.
+
+Algunas de las funciones de tablero son:
+\newline
+\textit{Ancho()}: Devuelve el ancho del tablero. Coincide con la cantidad de columnas.
+\newline
+\textit{Alto()}: Devuelve el alto del tablero. Coincide con la cantidad de filas.
+\newline
+\textit{Insertar(tablero, pieza, pos)}: Coloca 'pieza' en la posición 'pos'
+\newline
+\textit{SePuedeInsertarEn(tablero, pieza, pos)}: Indica si 'pieza' se puede insertar en la posición 'pos'. 
+Para ello, verifica que el casillero indicado por 'pos' esté vacío y que los colores inferior, derecho, izquierdo y superior de las piezas circundantes coincidan con los colores superior, izquierdo, derecho e inferior de 'pieza', respectivamente.
+\newline
+\textit{RemoverPieza(tablero, pos)}: Remueve la pieza ubicada en la posición 'pos'.
+
+~\\
+Para probar que el algoritmo es correcto, debemos ver que se cumplen 2 cosas:
+
+\begin{enumerate}
+ \item Se recorre siempre el espacio entero de soluciones \textbf{factibles}.
+ \item Al finalizar el algoritmo, la solución que devuelve es óptima.
+\end{enumerate}
+
+Antes de empezar definimos el espacio total como el conjunto de todos los tableros posibles, teniendo en cuenta que no puede haber una misma pieza (que tenga el mismo número identificador asociado) en dos lugares distintos.
+El cardinal de este espacio está descripto por la función partida $T(p, c)$ donde $p$ es la cantidad de piezas disponibles y $c$ es la cantidad de casilleros que faltan recorrer. Cabe aclarar que $T:\mathbb{N}\times\mathbb{N}\rightarrow \mathbb{N}$.
+
+\[T(p,c) = \left\{
+\begin{array}{l l}
+  p & \mbox{si c = 1}\\
+  p * T(p-1,c-1) + T(p,c-1) & \mbox{en otro caso}\\ 
+\end{array} 
+\right. 
+\]
+
+El cardinal del espacio total para un tablero de $n*m$ sería $T(n*m,n*m)$.
+
+~\\
+Vamos a probar 1:
+\newline
+\newline
+\-\hspace{0.3cm} El espacio de soluciones \textbf{infactibles} es el subconjunto del espacio total en el cual existe alguna pieza que: 
+\begin{itemize}
+ \item Su color superior no coincide con el color inferior de la pieza colocada arriba suyo (en el caso en que la pieza no esté en la primera fila)
+ \item Su color izquierdo no coincide con el color derecho de la pieza colocada a su izquierda (en el caso en que la pieza no esté en la primera columna)
+ \item Su color derecho no coincide con el color izquierdo de la pieza colocada a su derecha (en el caso en que la pieza no esté en la última columna)
+ \item Su color inferior no coincide con el color superior de la pieza colocada debajo suyo (en el caso en que la pieza no esté en la última fila)
+\end{itemize}
+
+Pero esto nunca puede pasar, ya que solo insertamos una pieza en el tablero cuando SePuedeInsertarEn para esa pieza en esa posición da verdadero, y por lo tanto nunca recorremos 
+el espacio de soluciones infactibles. Veamos ahora que recorremos el espacio entero de soluciones factibles. 
+
+El algoritmo de backtracking recorre los $n*m$ casilleros a lo largo de las llamadas recursivas. Es decir, la primer llamada mira solamente el primer casillero que lo definimos como el casillero que está en la esquina superior izquierda. 
+El segundo casillero es el que está a su derecha. Ese es revisado por cualquier llamada a la función Backtrack cuyo valor de casillero sea 1. En cada llamada elige una de las piezas restantes para ese casillero o lo deja vacío. 
+
+Por ejemplo, si coloca una pieza en el primer casillero entonces va a tener $n*m-1$ piezas para el próximo casillero que mire. En cambio si lo deja vacío, le quedan todavía $n*m$.
+Esto significa que hay $n*m$ llamadas con $n*m-1$ piezas para el segundo casillero y una llamada con $n*m$ piezas. Vale notar que cada llamada usa una pieza distinta para el primer casillero, si es que se coloca alguna pieza.
+
+En cualquier llamada donde tenemos que hay $p$ piezas restantes y el casillero a mirar es $c$, hay como mucho $T(p,c)$ llamadas recursivas por delante. Aquellas que no se hagan es porque no se podía colocar esa pieza en el casillero que estaba mirando.
+
+Finalmente se observa que la primer llamada tiene $n*m$ piezas y $n*m$ casilleros por recorrer.
+Con esto vemos que hay a lo sumo $T(n*m,n*m)$ llamadas recursivas. 
+
+El subconjunto del espacio total de soluciones recorrido es el espacio entero de soluciones factibles.
+Esto es porque las únicas disposiciones de tableros descartadas fueron las infactibles por lo dicho al principio.
+Por lo tanto, se cumple el punto 1.
+~\\
+\newline
+Veamos que se cumple 2:
+
+Por 1, sabemos que el algoritmo recorre el espacio entero de soluciones factibles. Entre todas ellas se encuentran incluidas las soluciones óptimas.
+Como se puede ver en el pseudocódigo, cada vez que encuentra una solución parcial cuyo tamaño sea mayor que el de la mejor solución encontrada hasta el momento, la guarda, descartando la anterior. 
+Por lo tanto, cuando en algún momento de la ejecución llegue a una solución óptima, que sabemos que va a pasar, necesariamente se va a quedar con esta.
+
+
+
+%\begin{verbatim}
+% 
+% Main():
+% 
+%    tablero = CrearTablero(n*m)     /* O(n*m) */
+%    piezas = CargarPiezas()         /* O(n*m) */
+%    mejorSolucion = []                   /* O(1) */
+%    solucionPorExplorar = []            /* O(1) */
+%    casillero = 0                   /* O(1) */
+%    rachaDeSaltos = 0               /* O(1) */
+%    
+%    Backtrack(tablero, piezas, mejorSolucion, solucionPorExplorar, casillero, rachaDeSaltos)
+%    
+% end Main
+% 
+%\end{verbatim}
+%\begin{algoritmo}{BacktrackSinPodas}{\Inout{tablero}{Tablero}, \Inout{piezas}{Lista(Pieza)}, \Inout{mejorSolucion}{Lista(PiezaYCoordenada)}, \Inout{solucionPorExplorar}{Lista(PiezaYCoordenada)}, \In{casillero}{Nat}}
+%\LinesNumbered
+%\nl	Coordenada posicion \asignar DeterminarCoordenada(casillero, Ancho(tablero))\tcc*{$O$(1)}
+%	Nat cantPiezas \asignar Tamaño(piezas)\tcc*{$O$(1)}
+%	Nat cantCasillerosRestantes \asignar (Ancho(tablero) * Alto(tablero)) - casillero\tcc*{$O$(1)}
+%	\tcc{Este ciclo ejecuta $cantPiezas$ veces, que en la primer llamada vale $n*m$}
+%	\For(\tcc*[f]{$O$($cantPiezas*Backtrack(casillero+1)$)}){\Forcond{i \asignar 1}{cantPiezas}}{
+%		pieza \asignar PrimeraPieza(piezas)\tcc*{$O$(1)}
+%		RemoverPrimerElemento(piezas)\tcc*{$O$(1)}
+%		\If(\tcc*[f]{$O$(1)}){SePuedeInsertarEn(tablero, pieza, posicion)}{
+%			Insertar(tablero, pieza, posicion)\tcc*{$O$(1)}
+%			InsertarAtras(solucionPorExplorar, <pieza, posicion>)\tcc*{$O$(1)}
+%			\If(\tcc*[f]{$O$(1)}){Tamaño(mejorSolucion) < Tamaño(solucionPorExplorar)}{
+%				mejorSolucion = solucionPorExplorar\tcc*{$O$(1)}
+%			}
+%			\If(\tcc*[f]{$O$(1)}){casillero < Ancho(tablero) * Alto(tablero) - 1}{
+%				Backtrack(tablero, piezas, mejorSolucion, solucionPorExplorar, casillero+1) \tcc*{Backtrack($casillero+1$)}
+%			}
+%			RemoverPieza(tablero, posicion)\tcc*{$O$(1)}
+%			RemoverUltimoElemento(solucionPorExplorar)\tcc*{$O$(1)}
+%		}
+%		InsertarAtras(piezas, pieza)\tcc*{$O$(1)}
+%	}
+%	\tcc{Esta es la primer poda}
+%	\If(\tcc*[f]{$O$(1)}){casillero < Ancho(tablero) * Alto(tablero) - 1}{
+%		Backtrack(tablero, piezas, mejorSolucion, solucionPorExplorar, casillero+1) \tcc*{Backtrack($casillero+1$)}
+%	}
+%\end{algoritmo}
+
+\subsubsection{Backtrack con podas}
+
+A continuación presentamos el algoritmo con podas.
+
+\begin{algoritmo}{Backtrack}{\Inout{tablero}{Tablero}, \Inout{piezas}{Lista(Pieza)}, \Inout{mejorSolucion}{Lista(PiezaYCoordenada)}, \Inout{solucionPorExplorar}{Lista(PiezaYCoordenada)}, \In{casillero}{Nat}, \In{usoPoda1}{\bool}, \In{usoPoda2}{\bool}, \In{usoPoda3}{\bool}, \Inout{usoPoda4}{\bool}}
+	Coordenada posicion \asignar DeterminarCoordenada(casillero, Ancho(tablero))\;
+	Nat cantPiezas \asignar Tamaño(piezas)\;
+	Nat cantCasillerosRestantes \asignar (Ancho(tablero) * Alto(tablero)) - casillero\;
+	\tcc{Esta es la cuarta poda}
+	\If{CantidadDeColoresMaxima(tablero) == Ancho(tablero)*Altura(tablero)*4  $\land$ usoPoda4}{
+		reviso si están todos los colores en las piezas\;
+		\uIf{están todos}{
+			GenerarSolucionTrivial(mejorSolucion, piezas, Ancho(tablero), Altura(tablero))\;
+		      \return\;
+		}\Else{
+			usarPoda4 \asignar false\;
+		}
+	}
+	\tcc{Esta es la segunda poda}
+	\If{Tamaño(mejorSolucion) $\geq$ Tamaño(solucionPorExplorar) + cantCasillerosRestantes  $\land$ usoPoda2}{
+		\return\;
+	}
+	\For{\Forcond{i \asignar 1}{cantPiezas}}{
+		pieza \asignar PrimeraPieza(piezas)\;
+		RemoverPrimerElemento(piezas)\;
+		\If{SePuedeInsertarEn(tablero, pieza, posicion)}{
+			Insertar(tablero, pieza, posicion)\;
+			InsertarAtras(solucionPorExplorar, <pieza, posicion>)\;
+			\If{Tamaño(mejorSolucion) < Tamaño(solucionPorExplorar)}{
+				mejorSolucion \asignar solucionPorExplorar\;
+			}
+			\If{casillero < Ancho(tablero) * Alto(tablero) - 1}{
+				Backtrack(tablero, piezas, mejorSolucion, solucionPorExplorar, casillero+1)\;
+			}
+			RemoverPieza(tablero, posicion)\;
+			RemoverUltimoElemento(solucionPorExplorar)\;
+		}
+		\tcc{Esta es la tercer poda}
+		\While{i < cantPiezas $\land$ usoPoda3}{
+			\If{pieza == PrimeraPieza(piezas)}{
+				InsertarAtras(piezas, PrimeraPieza(piezas))\;
+				RemoverPrimerElemento(piezas)\;
+				i++\;
+			}
+		}
+		InsertarAtras(piezas, pieza)\;
+	}
+	\If{casillero < Ancho(tablero) * Alto(tablero) - 1}{
+		\tcc{Esta es la primer poda}
+		\If{$\neg$PuedoPonerPiezaEnPosicionPorEncima(tablero, posicionActual) $\lor$ $\neg$usoPoda1}{
+			Backtrack(tablero, piezas, mejorSolucion, solucionPorExplorar, casillero+1)\;
+		}
+	}
+\end{algoritmo}
+
+\textit{PuedoPonerPiezaEnPosicionPorEncima}: Indica si puedo poner una pieza cualquiera en la posición que está arriba de la pasada por argumento. Si no existe posición por encima, devuelve falso. Sólo devuelve verdadero si existe la posición por encima, está vacía y los casilleros alrededor suyo también están vacíos (o no existen, si está en una esquina o borde).
+
+
+~\\
+
+Para probar que el algoritmo es correcto, debemos ver que se cumplen 3 cosas:
+\begin{enumerate}
+ \item Se recorre siempre el espacio de soluciones factibles.
+ \item Las podas no eliminan soluciones mejores que la obtenida hasta el momento.
+ \item Al finalizar el algoritmo, la solución que devuelve es óptima.
+\end{enumerate}
+
+El punto 1 sabemos que se cumple porque vimos que el algoritmo sin podas recorre el espacio entero de las soluciones factibles. Este algoritmo va a evitar explorar algunas ramas de ese subconjunto para tardar menos, pero al igual que el algoritmo anterior, nunca se sale del espacio de soluciones factibles.
+\newline
+\newline
+Ahora veamos que se cumple 2:
+
+La poda 1 corta la recursión cuando continuar con ella dejaría un casillero en blanco que fácilmente podríamos rellenar con cualquier pieza. 
+Supongamos que estamos en un casillero cualquiera que no sea de la primer fila, $c_0$.
+Si podemos insertar una pieza cualquiera en el casillero por encima, entonces cualquier solución que implique saltear este casillero $c_0$, 
+la puedo mejorar poniendo una pieza cualquiera en el casillero de la fila anterior y misma columna.\newline\vspace{0.2cm}
+
+Veamos ahora que la poda 2 no elimina soluciones óptimas: si el tamaño de la mejor solución que encontré hasta ahora es mayor que el tamaño de la solución que estoy explorando más
+la cantidad de piezas restantes, entonces por más que pudiese colocar todas esas piezas restantes, la mejor solución que encontró hasta ahora seguiría siendo mejor que la explorada.
+Por lo tanto, no estoy podando ninguna solución óptima.\newline\vspace{0.2cm}
+
+Veamos ahora que la poda 3 no elimina soluciones óptimas: esta poda, como se explicó en el punto Resolución, lo único que hace es evitar repetir árboles recursivos.
+Por lo tanto, la primera vez que recorro ese árbol recursivo, si había una solución óptima, ya la tomé. Evitar recorrer varias veces el mismo árbol no me imposibilita tomar
+la solución óptima dentro de él.\newline\vspace{0.2cm}
+
+Veamos finalmente que la poda 4 no elimina soluciones óptimas: Para que aplique la poda 4, cada uno de los 4 colores de cada una de las $n*m$ piezas debe ser único. En ese caso, es imposible que pueda colocar alguna pieza al lado de otra. 
+Por lo tanto, una solución óptima, que es la que terminamos generando, es la trivial, es decir, colocar cada pieza dejando
+un casillero vacío entre cada una. Si se trata de un tablero de cantidad de casilleros par, entonces cualquier tablero generado de esta manera da una solución óptima porque va a llenar la mitad de los casilleros. 
+En cambio, si la cantidad de casilleros es impar, sí importa la forma en que se eligen los casilleros donde se colocan piezas. Esto es porque para una forma de rellenarlo se consiguen colocar $\ceil*{\frac{n*m}{2}}$ y para la otra $\floor*{\frac{n*m}{2}}$.
+
+Entonces con mostrar que generamos la solución que coloca una pieza más que la otra para tableros de cantidad de casilleros impares, ya mostramos que es correcta la poda.
+Hay sólo dos formas de elegir los casilleros a rellenar del tablero dejando un casillero entre pieza y pieza. Consideremos un tablero donde los casilleros están pintados de blanco y negro como en uno de ajedrez, es decir, al lado de un casillero blanco sólo hay casilleros negros y viceversa.
+
+El casillero de la esquina superior izquierda (el que además consideramos primero) lo definimos como blanco. Luego el que está a su derecha, el segundo, es negro. Con esto generamos una partición del conjunto de casilleros del tablero con dos clases, negro y blanco.
+Entonces es cuestión de elegir qué casilleros llenar: los blancos o los negros. En un tablero de cantidad par de casilleros se puede ver fácilmente que hay la misma cantidad de casilleros blancos que negros, pero en uno de cantidad impar no.
+
+Consideremos entonces que la cantidad de casilleros es impar. Esto significa que tanto $n$ como $m$ son impares. Miremos primero cómo es una fila. Empieza con un casillero blanco o negro y termina con un casillero del mismo color por tener una cantidad impar de columnas.
+Esto implica que podemos agrupar dos filas contiguas y tendríamos la misma cantidad de casilleros blancos que de negros. Dicho esto, ignoremos las primeras $n-1$ filas, quedándonos con la última nada más (suponiendo que $n>1$ si no, aplica igual lo que sigue sin ignorar fila alguna).
+
+Es importante notar que la última fila empieza con un casillero blanco, igual que la primera. Entonces, el último casillero de la fila también es blanco. Con esto ya vemos que hay un casillero blanco más que casilleros negros.
+Dicho rápidamente: saquemos el primer casillero de esta fila, que es blanco, quedándonos con los $m-1$ restantes. Como $m-1$ es par sabemos que ahí tenemos la misma cantidad de casilleros blancos que negros.
+
+Entonces tenemos que la clase blanco tiene un casillero más en los tableros de cantidad impar de casilleros que los casilleros negros. Todo lo que queda por hacer es definir esa clase en nuestra matriz de piezas y asegurarnos de que generamos la solución trivial rellenando casilleros de esa clase.
+
+La clase blanco en nuestra matriz está definida como aquel casillero matriz[$i$][$j$] donde $i$ es el índice de fila y vale $0\leq i<n$ y $j$ es el índice de columna y vale $0\leq j<m$ que cumple $i+j\quad mod\quad 2 = 0$.
+En el código fuente se puede ver que la función generarSolucionTrivial elige los casilleros de esta forma.
+\newline
+Por lo tanto, se cumple el punto 2.
+\newline
+\newline
+Por último, 3 se cumple casi por los mismos motivos que en el algoritmo sin podas:
+
+Por 1 y 2, sabemos que el algoritmo recorre el espacio de soluciones factibles y que además, dentro de este espacio de soluciones, están las óptimas.
+Como se puede ver en el pseudocódigo, cada vez que encuentra una solución parcial cuyo tamaño sea mayor que el de la mejor solución que encontró hasta ahora, me la quedo. 
+Por lo tanto, cuando en algún momento de la ejecución llegue a una solución óptima, necesariamente se va a quedar con esta.
+\newline
+Entonces, por 1, 2 y 3, el algoritmo es correcto.
+
+\subsection{Complejidad}
+
+Para calcular la complejidad de la función Backtrack, definimos la función $T'(p,c)$ en base a la función $T(p,c)$ que usamos para calcular el cardinal del espacio total, que representa el costo temporal que tiene la función con una entrada de $p$ piezas y $c$ casilleros restantes para ver. 
+
+\[T'(p,c) = \left\{
+\begin{array}{l l}
+  p * union(p) & \mbox{si c = 1}\\
+  p * (union(p) + T'(p-1,c-1)) + T'(p,c-1) & \mbox{en otro caso}\\ 
+\end{array} 
+\right. 
+\]
+
+
+La función $union(p)$ es el costo que tiene la función de backtrack en todas las operaciones que no sean llamadas recursivas. Como se ve en la porción de pseudocódigo a continuación, en el peor caso $union(p) = n*m$ con lo que $union(p) \in O(n*m)$.
+~\\
+\newline
+\begin{algoritmo}{Backtrack}{\Inout{tablero}{Tablero}, \Inout{piezas}{Lista(Pieza)}, \Inout{mejorSolucion}{Lista(PiezaYCoordenada)}, \Inout{solucionPorExplorar}{Lista(PiezaYCoordenada)}, \In{casillero}{Nat}, \In{usoPoda1}{\bool}, \In{usoPoda2}{\bool}, \In{usoPoda3}{\bool}, \Inout{usoPoda4}{\bool}}
+	Coordenada posicion \asignar DeterminarCoordenada(casillero, Ancho(tablero))\tcc*{$O$(1)}
+	Nat cantPiezas \asignar Tamaño(piezas)\tcc*{$O$(1)}
+	Nat cantCasillerosRestantes \asignar (Ancho(tablero) * Alto(tablero)) - casillero\tcc*{$O$(1)}
+\end{algoritmo}
+\begin{algoritmosimple}
+\setcounter{AlgoLine}{16}
+	\tcc{Este ciclo ejecuta $cantPiezas$ veces, que en la primer llamada vale $n*m$}
+	\For(\tcc*[f]{$O$($cantPiezas*(n*m+T'$($cantPiezas-1$, $(n*m-casillero)-1)$))}){\Forcond{i \asignar 1}{cantPiezas}}{
+		pieza \asignar PrimeraPieza(piezas)\tcc*{$O$(1)}
+		RemoverPrimerElemento(piezas)\tcc*{$O$(1)}
+		\If(\tcc*[f]{$O$(1)}){SePuedeInsertarEn(tablero, pieza, posicion)}{
+			Insertar(tablero, pieza, posicion)\tcc*{$O$(1)}
+			InsertarAtras(solucionPorExplorar, <pieza, posicion>)\tcc*{$O$(1)}
+			\If(\tcc*[f]{$O$(1)}){Tamaño(mejorSolucion) < Tamaño(solucionPorExplorar)}{
+				mejorSolucion \asignar solucionPorExplorar\tcc*{$O$($n*m$)}
+			}
+			\If(\tcc*[f]{$O$(1)}){casillero < Ancho(tablero) * Alto(tablero) - 1}{
+				Backtrack(tablero, piezas, mejorSolucion, solucionPorExplorar, casillero+1)\;
+				\tcc*{$cantPiezas*T'$($cantPiezas-1$, $(n*m-casillero)-1$)}
+			}
+			RemoverPieza(tablero, posicion)\tcc*{$O$(1)}
+			RemoverUltimoElemento(solucionPorExplorar)\tcc*{$O$(1)}
+		}
+		\tcc{Esta es la tercer poda}
+		\While(\tcc*[f]{$O$($cantPiezas$)}){i < cantPiezas $\land$ usoPoda3}{
+			\If(\tcc*[f]{$O$(1)}){pieza == PrimeraPieza(piezas)}{
+				InsertarAtras(piezas, PrimeraPieza(piezas))\tcc*{$O$(1)}
+				RemoverPrimerElemento(piezas)\tcc*{$O$(1)}
+				i++\tcc*{$O$(1)}
+			}
+		}
+		InsertarAtras(piezas, pieza)\tcc*{$O$(1)}
+	}
+\end{algoritmosimple}
+~\\
+\newline
+Algunas consideraciones adicionales: $cantPiezas \leq n*m \Rightarrow cantPiezas \in O(n*m)$.
+Desarrollemos un poco $T'(n*m, n*m)$:
+
+$T'(n*m, n*m) = (n*m) * (n*m + T'(n*m-1, n*m-1)) + T'(n*m, n*m-1) =\\ (n*m)^2 + n*m* T'(n*m-1, n*m-1) + T'(n*m, n*m-1) =\\ (n*m)^2 + n*m* \bigg((n*m-1) * \Big(n*m + T'(n*m-2,n*m-2)\Big) + T'(p,n*m-2)\bigg) + T'(n*m, n*m-1)$
+
+Con esto vemos que emerge un término $n*m*(n*m)!$ con lo cual el algoritmo tiene complejidad total de $O\big(n*m*(n*m)!\big)$.
+
+El resto de las podas merecen un análisis aparte porque evitan iteraciones del algoritmo sin influir mucho en la complejidad asintótica.
+Veamos la complejidad de la cuarta poda:
+
+\begin{algoritmosimple}
+\setcounter{AlgoLine}{4}
+	\tcc{Esta es la cuarta poda}
+	\If(\tcc*[f]{$O$(1)}){CantidadDeColoresMaxima(tablero) = Ancho(tablero)*Altura(tablero)*4  $\land$ usoPoda4}{
+		reviso si están todos los colores en las piezas\tcc*{$O$($n*m$)}
+		\uIf(\tcc*[f]{$O$($n*m$)}){están todos}{
+			GenerarSolucionTrivial(mejorSolucion, piezas, Ancho(tablero), Altura(tablero))\tcc*{$O$($n*m$)}
+		    \return\;
+		}\Else{
+			usarPoda4 \asignar false\tcc*{$O$(1)}
+		}
+	}
+\end{algoritmosimple}
+
+Como se puede ver, la comparación en la guarda es $O$(1). Esto significa que no influye asintóticamente una vez que se encuentra desactivada la poda. Si llega a cumplirse la guarda, termina ejecutando el bloque una sola vez. Ejecutar el bloque cuesta $O$($n*m$). Si resulta que están todos los $n*m*4$ colores nos ahorramos la complejidad inmensa de $T'(n*m,n*m)$. En caso contrario, pagamos muy poco en relación con lo que va a costar explorar el espacio de soluciones y nos aseguramos de hacerlo solo una vez.
+
+Veamos la complejidad de la segunda poda:
+
+\begin{algoritmosimple}
+\setcounter{AlgoLine}{13}
+	\tcc{Esta es la segunda poda}
+	\If(\tcc*[f]{$O$(1)}){Tamaño(mejorSolucion) $\geq$ Tamaño(solucionPorExplorar) + cantCasillerosRestantes  $\land$ usoPoda2}{
+		\return\;
+	}
+\end{algoritmosimple}
+
+Esta es la mejor poda a nuestra disposición. Tiene un costo constante y evita explorar subconjuntos del espacio de soluciones bastante grandes.
+
+Finalmente veamos la complejidad de la primer poda:
+
+\begin{algoritmosimple}
+\setcounter{AlgoLine}{40}
+	\If(\tcc*[f]{$O$(1)}){casillero < Ancho(tablero) * Alto(tablero) - 1}{
+		\tcc{Esta es la primer poda}
+		\If(\tcc*[f]{$O$(1)}){$\neg$PuedoPonerPiezaEnPosicionPorEncima(tablero, posicionActual) $\lor$ $\neg$usoPoda1}{
+			Backtrack(tablero, piezas, mejorSolucion, solucionPorExplorar, casillero+1)\;
+			\tcc*{$T'$($cantPiezas$, $(n*m-casillero)-1$)}
+		}
+	}
+\end{algoritmosimple}
+
+Nuevamente tiene un costo constante como las otras. A priori, su efectividad es cuestionable si está activada al mismo tiempo que la segunda poda porque ambas apuntan a podar el mismo tipo de soluciones: tableros demasiado vacíos.
+
+\subsection{Testing}
+
+Para hacer el testing consideramos los casos bordes, es decir, cuando todos los colores son iguales, y cuando todos los colores son distintos.
+
+\includegraphics[width = 0.8 \textwidth]{ej3/ejemplo1.jpg}
+
+\includegraphics[width = 0.8 \textwidth]{ej3/ejemplo2.jpg}
+
+Como podemos observar, ambas soluciones son las esperadas.
+
+
+
+
+\subsection{Experimentación}
+
+\subsubsection{Generación de Casos Aleatorios}
+
+El generador de casos de test random es genRan y toma exactamente cuatro argumentos.\\
+\textbf{genRan targetFile dimensión ncolores hilos}\\
+El argumento \textbf{targetFile} le da el nombre base del archivo donde va a escribir los tests. Este se escribe en modo 'out' con lo que se destruye
+lo que haya en cualquier archivo ya existente con el mismo nombre. El argumento \textbf{hilos}, le indica en cuántos archivos repartir los tests generados. 
+Si vale 4 por ejemplo, va a generar cuatro archivos: targetFile-1, targetFile-2, targetFile-3 y targetFile-4. 
+La idea de esta opción es poder ejecutar el backtracking en paralelo sobre una tanda generada.
+Los tests que genera son todos los tableros que tienen como máximo \textbf{filas*columnas} = \textbf{dimensión} casilleros y como mucho \textbf{ncolores} colores.
+Para generar los colores de las piezas, utilizamos la función \textbf{rand()} con semilla \textbf{srand(time(NULL))}.
+
+\subsubsection{Instrucciones de uso}
+
+Hay un makefile en el directorio ej3 que corresponde a este problema.
+Si se ejecuta make all, va a compilar tanto el backtrack1 como el backtrack2, y además el generador de tests random.
+El backtrack1 es el algoritmo que recorre de manera no única el espacio de soluciones intentando poner todas las piezas que puede.
+El backtrack2 es el algoritmo que analizamos y podamos lo más posible dado que sí recorría de manera única el espacio de posibilidades.
+Si no se desean tomar mediciones, la manera de ejecutarlo es la normal, redireccionando el archivo que contiene las instancias de test. Ej: ./backtrack2 < instanciasTest.
+~\\
+\\
+En caso de querer tomar mediciones, se deben especificar los siguientes parámetros adicionales: un primer parámetro con el nombre del archivo en donde se desean guardar las mediciones, y 
+un segundo, tercer y cuarto parámetro, correspondientes a las podas 1, 2 y 3 respectivamente, que deberán ser \textbf{1} para activar la poda y \textbf{0} para desactivarla. Luego se deberá 
+redireccionar el archivo que contiene las instancias de test. Ej: ./backtrack2 archivoMediciones 1 1 1 < instanciasTest, en donde se están activando las 3 podas y guardando los resultados de las
+ mediciones en ``archivoMediciones''.
+
+
+
+\subsubsection{Resultados}
+
+Primero presentamos un gráfico que compara el backtrack1 contra el 2. A continuación se ven gráficos para tableros $n$ filas, $m$ columnas y $n*m$ colores con distintas podas activadas.
+Finalmente hay gráficos para tableros de $n*m*4$ colores, nuevamente con distintas podas activadas.
+\includepdf[pages={1}]{ej3/mediciones/comparacion/comparacion_nueva.pdf}
+\includepdf[pages={1}]{ej3/mediciones/1color/graficos_nuevos.pdf}
+\includepdf[pages={1}]{ej3/mediciones/10colores/graficos_nuevos.pdf}
+\includepdf[pages={1}]{ej3/mediciones/n*m/graficos_nuevos.pdf}
+\includepdf[pages={1}]{ej3/mediciones/n*m*4/graficos_nuevos.pdf}
+
+
+\subsubsection{Conclusiones}
+
+Las conclusiones que pudimos sacar en cuanto a las 2 versiones de backtracking fue lo que esperabamos: la versión 2 es claramente más rápida que la versión 1.
+En cuanto a las podas, pudimos ver una tendencia que se mantuvo para distintas cantidades de colores: la poda 1 se mostró totalmente inefectiva, superando en algunos casos a la versión sin podas en tiempo de ejecución.
+La poda 2 resulto ser la más efectiva, siendo la que siempre tomaba el menor tiempo de ejecución, seguida de la poda 3, que funciono bien para tableros chicos, pero a partir de $n*m = 10$ aproximadamente, comenzó 
+a mostrarse ineficiente.
+
+\subsection{Desarrollo de los ejercicios adicionales}
+
+\subsubsection{Modificación del algoritmo}
+Para hacer que el algoritmo funcione en un tablero toroidal basta con modificar la función SePuedeInsertarEn para que revise los casilleros del otro extremo de la matriz cuando está en un borde.
+\subsubsection{Impacto en las podas desarrolladas}
+La cuarta poda, donde se revisa si se tienen $n*m*4$ colores en las piezas ya no es correcta. El problema es que la generación de la solución trivial asume que se trata de un tablero con bordes y esquinas, no uno donde todo casillero tiene cuatro vecinos. Si se adapta la generación de la solución trivial al tablero toroidal se puede seguir usando.
+
+La primer poda sigue funcionando y tiene un efecto interesante. Como el casillero que está por encima del primero está vacío y también los contiguos sin incluir al primero, nunca podría dejar vacío un casillero en la primera llamada. Es probable que esta poda sea más efectiva en este tablero toroidal que en el rectangular.
+
+Las otras dos podas no se ven afectadas por la forma del tablero, ya que una es una poda por altura, y la otra una poda que evita repetir árboles recursivos, y ambas cosas son independientes de la forma del tablero.
+\subsubsection{Poda para un tablero toroidal}
+La mejor poda que se nos ocurrió consiste en explorar cada disposición relativa de piezas una sola vez. Con esto se quiere decir que, por ejemplo, si ya se probó en algún momento colocar la pieza 1 en el primer casillero y la pieza 2 dos casilleros a la derecha del primero, entonces no tiene sentido probar la pieza 1 en el casillero k y la pieza 2 nuevamente dos casilleros su derecha.

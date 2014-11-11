@@ -1,0 +1,60 @@
+\subsection{Sobre la complejidad }
+ En todos los ejercicios trabajamos sobre el Modelo Uniforme. Por lo tanto suponemos en todos los casos que las asignaciones y comparaciones 
+ de tipos básicos, definición de variables, creación de iteradores y operaciones matemáticas estándar tienen una complejidad constante.
+ 
+ \subsection{Sobre la documentación }
+  Usamos como documentación la pagina http://en.cppreference.com/w/, y aparece en cada cálculo de complejidad el link correspondiente
+  a la función 
+  usada.
+\subsection{Sobre la implementación }
+La carpeta del tp contiene una subcarpeta por ejercicio.
+
+Dentro de estas se encuentra los archivos usados en la implementación del problema, 
+y otra carpeta, llamada Test, que contiene todo lo relativo al testeo del ejercicio. La carpeta de Test contiene el
+generador de instancias aleatorias, 
+los test de correctitud, o casos $borde$, un archivo test random usado para generar las mediciones y un archivo.xls
+donde figuran las mismas,
+ que fueron usadas para crear los gráficos.
+ 
+También se adjuntan Makefile's para asegurar que el proceso de compilación sea el mismo. 
+ 
+ \subsection{Sobre la ejecución }
+ Para la ejecución de los ejecutables, en los tres casos, debe pasarse como parámetro un 1 o un 0 que indica si debe 
+ tomar mediciones o no. 1 significa que si, 0 que no debe hacerlo. 
+ En el caso particular del ejercicio 3, además deben pasarse parámetros adicionales indicando que podas se desea aplicar 
+ (más detalles en el ejercicio correspondiente). Finalmente, se debe usar el operador 
+ de redirección <, seguido del nombre del archivo que contiene las instancias de test.
+ La ejecución de los generadores de instancias es directa, luego se pide ingresar los parámetros por consola, durante la ejecución.  
+ 
+  
+ \subsection{Sobre la experimentación }
+A fin de reducir el $ruido$, ejecutamos 50 veces la resolución de la misma instancia, y tomamos el tiempo final como
+el promedio de los tiempos 
+sumados. El tiempo se mide en nanosegundos.
+\subsubsection{Medición de Tiempos}
+Para realizar la medición de tiempos, utilizamos el tipo timespec, que es una estructura con los siguientes tipos:
+\newline
+\begin{verbatim}
+time_t  tv_sec   
+long    tv_nsec 
+\end{verbatim}
+Que almacenan el tiempo en segundos y nanosegundos, respectivamente.
+\newline
+Para medir el tiempo antes y después de correr el algoritmo, utilizamos la función \textbf{clock\_gettime}, y luego
+para obtener la diferencia entre el tiempo de inicio y el tiempo final, utilizamos la función diff, definida a continuación:
+
+\begin{verbatim}
+timespec diff(timespec start, timespec end) {
+    timespec temp;
+    if ((end.tv_nsec-start.tv_nsec)<0) {
+        temp.tv_sec = end.tv_sec-start.tv_sec-1;
+        temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+    } else {
+        temp.tv_sec = end.tv_sec-start.tv_sec;
+        temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+    }
+    return temp;
+}
+
+\end{verbatim}
+
